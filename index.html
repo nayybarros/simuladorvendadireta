@@ -1,0 +1,811 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulador de Venda Direta</title>
+  <style>
+    :root{
+      --green-dark:#00512A;
+      --green:#007C27;
+      --bg:#F0F5CD;
+      --card:#ffffff;
+      --border:#d8e3ce;
+      --text:#16331f;
+      --muted:#5f6f63;
+      --warn:#b45309;
+      --danger:#b91c1c;
+      --ok:#166534;
+      --shadow:0 10px 24px rgba(0,0,0,.08);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Arial, Helvetica, sans-serif;
+      background:linear-gradient(180deg, #f8fbec 0%, var(--bg) 100%);
+      color:var(--text);
+    }
+    .wrap{max-width:1600px;margin:0 auto;padding:24px}
+    .hero{
+      background:linear-gradient(135deg, var(--green-dark), var(--green));
+      color:#fff;
+      padding:24px;
+      border-radius:24px;
+      box-shadow:var(--shadow);
+      margin-bottom:20px;
+    }
+    .hero h1{margin:0 0 6px 0;font-size:30px}
+    .hero p{margin:0;opacity:.95}
+    .grid{
+      display:grid;
+      grid-template-columns:minmax(320px, 420px) minmax(0, 1fr);
+      gap:20px;
+      align-items:start;
+    }
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:18px;
+      min-width:0;
+    }
+    .section-title{
+      margin:0 0 14px 0;
+      font-size:18px;
+      color:var(--green-dark);
+    }
+    .form-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+    .field{display:flex;flex-direction:column;gap:6px}
+    .field.full{grid-column:1 / -1}
+    label{
+      font-size:13px;
+      font-weight:700;
+      color:var(--green-dark);
+    }
+    input, select{
+      width:100%;
+      border:1px solid #cddac6;
+      border-radius:12px;
+      padding:11px 12px;
+      font-size:14px;
+      color:var(--text);
+      background:#fff;
+      outline:none;
+    }
+    input:focus, select:focus{
+      border-color:var(--green);
+      box-shadow:0 0 0 3px rgba(0,124,39,.12);
+    }
+    
+    .readonly-disabled{
+      background:#eef3ea;
+      color:#6b7a70;
+      cursor:not-allowed;
+      font-weight:700;
+    }
+    
+    .readonly{
+      background:#f4f7ef;
+      font-weight:700;
+    }
+    .muted{color:var(--muted);font-size:12px}
+    .small-note{font-size:12px;color:var(--muted);margin-top:2px}
+    .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+    button{
+      border:0;
+      border-radius:14px;
+      padding:12px 16px;
+      cursor:pointer;
+      font-weight:700;
+      font-size:14px;
+    }
+    .btn-primary{background:var(--green-dark);color:#fff}
+    .btn-secondary{background:#edf5eb;color:var(--green-dark);border:1px solid #d1e1cf}    .alerts{
+      display:grid;
+      gap:8px;
+      margin-bottom:16px;
+    }
+    .alert{
+      padding:12px 14px;
+      border-radius:14px;
+      font-size:14px;
+      font-weight:700;
+    }
+    .alert.ok{background:#edf9f0;color:var(--ok);border:1px solid #c7ecd2}
+    .alert.warn{background:#fff7ed;color:var(--warn);border:1px solid #fed7aa}
+    .alert.error{background:#fef2f2;color:var(--danger);border:1px solid #fecaca}
+    .complementos{
+      display:grid;
+      gap:10px;
+      margin-top:10px;
+    }
+    .comp-row{
+      display:grid;
+      grid-template-columns:130px 1fr 1fr;
+      gap:10px;
+      align-items:end;
+      padding:10px;
+      border:1px solid #e3ebdd;
+      border-radius:14px;
+      background:#fbfdf8;
+    }
+    .comp-tag{
+      background:#eef6ea;
+      color:var(--green-dark);
+      border-radius:10px;
+      padding:11px 12px;
+      font-weight:700;
+      text-align:center;
+    }
+    .table-wrap{
+      overflow:auto;
+      width:100%;
+      max-width:100%;
+      border:1px solid var(--border);
+      border-radius:16px;
+      background:#fff;
+      -webkit-overflow-scrolling:touch;
+    }
+    table{
+      width:100%;
+      min-width:1500px;
+      border-collapse:collapse;
+      font-size:13px;
+    }
+    thead th{
+      position:sticky;
+      top:0;
+      background:var(--green-dark);
+      color:#fff;
+      text-align:center;
+      padding:11px 8px;
+      white-space:nowrap;
+    }
+    tbody td{
+      border-bottom:1px solid #edf1ea;
+      padding:9px 8px;
+      text-align:right;
+      white-space:nowrap;
+    }
+    tbody td.left{ text-align:left }
+    tbody tr:nth-child(even){background:#fbfdf9}
+    tbody tr.obra{background:#f8fcf4}
+    tbody tr.pos{background:#fffdf8}
+    tbody tr.evento{background:#f7faf6;font-weight:700}
+    .pill{
+      display:inline-block;
+      padding:5px 10px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:800;
+    }
+    .pill.obra{background:#e8f5e9;color:#166534}
+    .pill.pos{background:#fff7ed;color:#b45309}
+    .pill.evento{background:#eef2ff;color:#3730a3}
+    @media (max-width:1200px){
+      .wrap{padding:16px}
+      .grid{grid-template-columns:1fr}
+      .hero h1{font-size:26px}
+    }
+    @media (max-width:700px){
+      .wrap{padding:12px}
+      .hero{padding:18px;border-radius:18px}
+      .hero h1{font-size:22px}
+      .card{padding:14px}
+      .form-grid{grid-template-columns:1fr}
+      .comp-row{grid-template-columns:1fr}
+      input, select, button{font-size:16px}
+      table{min-width:1200px}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <h1>Simulador de Venda Direta</h1>
+      <p>Escolha o empreendimento, informe as condições da venda e gere o fluxo corrigido com obra, pós-obra e complementos de sinal.</p>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2 class="section-title">Entradas da simulação</h2>
+
+        <div class="form-grid">
+          <div class="field full">
+            <label for="empreendimento">Empreendimento</label>
+            <select id="empreendimento">
+              <option value="Vista Parque">Vista Parque</option>
+              <option value="Jóquei">Jóquei</option>
+              <option value="Atlântico">Atlântico</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="dataEntregaTxt">Data de entrega</label>
+            <input id="dataEntregaTxt" class="readonly" readonly />
+          </div>
+
+          <div class="field">
+            <label for="valorUnidade">Valor da unidade</label>
+            <input id="valorUnidade" type="number" min="0" step="0.01" value="445000" />
+          </div>
+
+          <div class="field">
+            <label for="rendaCliente">Renda do cliente</label>
+            <input id="rendaCliente" type="number" min="0" step="0.01" value="20000" />
+          </div>
+
+          <div class="field">
+            <label for="sinal">Sinal</label>
+            <input id="sinal" type="number" min="0" step="0.01" value="22250" />
+          </div>
+
+          <div class="field">
+            <label for="percentualSinal">% do sinal</label>
+            <input id="percentualSinal" class="readonly" readonly />
+          </div>
+
+          <div class="field">
+            <label for="primeiroVencimento">Primeiro vencimento</label>
+            <input id="primeiroVencimento" type="date" />
+            <div class="small-note">Aceita somente dia 10 ou dia 20.</div>
+          </div>
+
+          <div class="field">
+            <label for="qtdMensais">Qtd. mensais</label>
+            <input id="qtdMensais" type="number" min="1" max="60" step="1" value="60" />
+          </div>
+
+          <div class="field">
+            <label for="mensaisObra">Qtd. mensais obra</label>
+            <input id="mensaisObra" class="readonly" readonly />
+          </div>
+
+          <div class="field">
+            <label for="mensaisPos">Qtd. mensais pós-obra</label>
+            <input id="mensaisPos" class="readonly" readonly />
+          </div>
+
+          <div class="field">
+            <label for="qtdComplementos">Qtd. complemento de sinal</label>
+            <input id="qtdComplementos" type="number" min="0" max="4" step="1" value="0" />
+          </div>
+
+          <div class="field">
+            <label for="desconto">Desconto</label>
+            <input id="desconto" type="number" min="0" step="0.01" value="0" />
+          </div>
+
+          <div class="field">
+            <label for="taxaObra">% correção obra</label>
+            <input id="taxaObra" class="readonly-disabled" type="number" min="0" step="0.0001" value="0.005" readonly disabled />
+          </div>
+
+          <div class="field">
+            <label for="taxaPos">% correção pós-obra</label>
+            <input id="taxaPos" class="readonly-disabled" type="number" min="0" step="0.0001" value="0.015" readonly disabled />
+          </div>
+        </div>
+
+        <div class="complementos" id="complementos"></div>
+
+        <div class="btns">
+          <button class="btn-primary" id="btnSimular">Gerar simulação</button>
+          <button class="btn-secondary" id="btnExemplo">Carregar exemplo</button>
+          <button class="btn-secondary" id="btnCsv">Exportar fluxo CSV</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="card" style="margin-bottom:18px;">
+          <h2 class="section-title">Validações</h2>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:14px;">
+            <div style="background:#f7faf4;border:1px solid var(--border);border-radius:12px;padding:12px;">
+              <div style="font-size:11px;color:var(--muted);text-transform:uppercase;">Saldo inicial financiado</div>
+              <div id="kpiSaldo" style="font-size:22px;font-weight:800;color:var(--green-dark);margin-top:4px;">R$ 0,00</div>
+            </div>
+            <div style="background:#f7faf4;border:1px solid var(--border);border-radius:12px;padding:12px;">
+              <div style="font-size:11px;color:var(--muted);text-transform:uppercase;">Valor atualizado final</div>
+              <div id="kpiAtualizado" style="font-size:22px;font-weight:800;color:var(--green-dark);margin-top:4px;">R$ 0,00</div>
+            </div>
+            <div style="background:#f7faf4;border:1px solid var(--border);border-radius:12px;padding:12px;">
+              <div style="font-size:11px;color:var(--muted);text-transform:uppercase;">Maior parcela</div>
+              <div id="kpiMaiorParcela" style="font-size:22px;font-weight:800;color:var(--green-dark);margin-top:4px;">R$ 0,00</div>
+            </div>
+            <div style="background:#f7faf4;border:1px solid var(--border);border-radius:12px;padding:12px;">
+              <div style="font-size:11px;color:var(--muted);text-transform:uppercase;">Comprometimento da renda</div>
+              <div id="kpiComprometimento" style="font-size:22px;font-weight:800;color:var(--green-dark);margin-top:4px;">0,0%</div>
+            </div>
+          </div>
+          <div class="alerts" id="alerts"></div>
+        </div>
+
+        <div class="card">
+          <h2 class="section-title">Fluxo</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fase</th>
+                  <th>Vencimento</th>
+                  <th>Período</th>
+                  <th>Saldo inicial</th>
+                  <th>% correção</th>
+                  <th>Correção do período</th>
+                  <th>Saldo corrigido</th>
+                  <th>Parcelas no período</th>
+                  <th>Parcelas remanescentes</th>
+                  <th>Valor por parcela</th>
+                  <th>Valor pago no período</th>
+                  <th>Saldo final</th>
+                  <th>Pago acumulado</th>
+                  <th>Correção acumulada</th>
+                  <th>Valor Atualizado</th>
+                  <th>% pago acumulado</th>
+                  <th>% saldo</th>
+                </tr>
+              </thead>
+              <tbody id="tbodyFluxo"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const empreendimentos = {
+  "Vista Parque": { entregaTxt: "mai/27", entregaReal: "2027-05-31" },
+  "Jóquei": { entregaTxt: "dez/27", entregaReal: "2027-12-31" },
+  "Atlântico": { entregaTxt: "abr/28", entregaReal: "2028-04-30" }
+};
+
+const $ = (id) => document.getElementById(id);
+
+function toNumber(v){
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+}
+function parseDate(str){
+  if(!str) return null;
+  const d = new Date(str + "T12:00:00");
+  return isNaN(d) ? null : d;
+}
+function fmtCurrency(v){
+  return v.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+}
+function fmtPercent(v){
+  return (v || 0).toLocaleString('pt-BR', {style:'percent', minimumFractionDigits:1, maximumFractionDigits:1});
+}
+function fmtRate(v){
+  return (v || 0).toLocaleString('pt-BR', {style:'percent', minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function fmtDate(d){
+  if(!d) return "";
+  return d.toLocaleDateString('pt-BR');
+}
+function addMonths(date, months){
+  const d = new Date(date.getTime());
+  const originalDay = d.getDate();
+  d.setMonth(d.getMonth() + months);
+  if (d.getDate() < originalDay) d.setDate(0);
+  return d;
+}
+function endOfMonth(date){
+  return new Date(date.getFullYear(), date.getMonth()+1, 0);
+}
+function monthsDiffInclusive(startDate, endDate){
+  if(!startDate || !endDate) return 0;
+  return Math.max(0, ((endDate.getFullYear() - startDate.getFullYear()) * 12) + (endDate.getMonth() - startDate.getMonth()) + 1);
+}
+function dayAllowed(date){
+  if(!date) return false;
+  const day = date.getDate();
+  return day === 10 || day === 20;
+}
+function todayIso(){
+  const d = new Date();
+  const m = String(d.getMonth()+1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+function createComplementos(){
+  const qtd = Math.max(0, Math.min(4, Math.floor(toNumber($('qtdComplementos').value))));
+  const wrap = $('complementos');
+  wrap.innerHTML = '';
+  for(let i=1;i<=4;i++){
+    const hidden = i > qtd ? 'display:none;' : '';
+    const row = document.createElement('div');
+    row.className = 'comp-row';
+    row.style = hidden;
+    row.dataset.index = i;
+    row.innerHTML = `
+      <div class="comp-tag">Complemento ${i}</div>
+      <div class="field" style="margin:0;">
+        <label for="compData${i}">Data vencimento</label>
+        <input id="compData${i}" type="date" />
+      </div>
+      <div class="field" style="margin:0;">
+        <label for="compValor${i}">Valor</label>
+        <input id="compValor${i}" type="number" min="0" step="0.01" value="0" />
+      </div>
+    `;
+    wrap.appendChild(row);
+  }
+}
+function updateEntrega(){
+  const emp = $('empreendimento').value;
+  const info = empreendimentos[emp];
+  $('dataEntregaTxt').value = info.entregaTxt;  recalcBasics();
+}
+function recalcBasics(){
+  const valorUnidade = toNumber($('valorUnidade').value);
+  const sinal = toNumber($('sinal').value);
+  const pct = valorUnidade > 0 ? sinal / valorUnidade : 0;
+  $('percentualSinal').value = fmtPercent(pct);
+
+  const entregaReal = parseDate(empreendimentos[$('empreendimento').value].entregaReal);
+  const primeiroVenc = parseDate($('primeiroVencimento').value);
+  const qtdMensais = Math.max(0, Math.min(60, Math.floor(toNumber($('qtdMensais').value))));
+  const obra = Math.min(qtdMensais, monthsDiffInclusive(primeiroVenc, entregaReal));
+  const pos = Math.max(0, qtdMensais - obra);
+  $('mensaisObra').value = obra;
+  $('mensaisPos').value = pos;
+}
+function getComplementos(){
+  const qtd = Math.max(0, Math.min(4, Math.floor(toNumber($('qtdComplementos').value))));
+  const comps = [];
+  for(let i=1;i<=qtd;i++){
+    comps.push({
+      fase: `COMPLEMENTO ${i}`,
+      data: parseDate($(`compData${i}`)?.value),
+      valor: toNumber($(`compValor${i}`)?.value)
+    });
+  }
+  return comps;
+}
+function validationsAndData(){
+  const emp = $('empreendimento').value;
+  const entregaReal = parseDate(empreendimentos[emp].entregaReal);
+  const valorUnidade = toNumber($('valorUnidade').value);
+  const renda = toNumber($('rendaCliente').value);
+  const sinal = toNumber($('sinal').value);
+  const primeiroVenc = parseDate($('primeiroVencimento').value);
+  const qtdMensais = Math.max(0, Math.min(999, Math.floor(toNumber($('qtdMensais').value))));
+  const qtdComplementos = Math.max(0, Math.floor(toNumber($('qtdComplementos').value)));
+  const desconto = toNumber($('desconto').value);
+  const taxaObra = toNumber($('taxaObra').value);
+  const taxaPos = toNumber($('taxaPos').value);
+
+  const alerts = [];
+  const addAlert = (type, text) => alerts.push({type, text});
+
+  if(valorUnidade <= 0) addAlert('error', 'Informe um valor de unidade maior que zero.');
+  if(sinal / Math.max(valorUnidade,1) >= 0.05) addAlert('ok', 'Sinal mínimo: OK.');
+  else addAlert('error', 'Sinal mínimo: ajustar para pelo menos 5% do valor da unidade.');
+
+  if(dayAllowed(primeiroVenc)) addAlert('ok', '1º vencimento: OK.');
+  else addAlert('error', '1º vencimento: usar apenas dia 10 ou dia 20.');
+
+  if(qtdMensais >= 1 && qtdMensais <= 60) addAlert('ok', 'Qtd. mensais: OK.');
+  else addAlert('error', 'Qtd. mensais: ajustar para um valor entre 1 e 60.');
+
+  if(qtdComplementos >= 0 && qtdComplementos <= 4) addAlert('ok', 'Qtd. de complementos: OK.');
+  else addAlert('error', 'Complementos: permitido no máximo 4.');
+
+  const comps = getComplementos();
+  let compValid = true;
+  comps.forEach((c, idx) => {
+    if(c.valor > 0){
+      if(!c.data || c.data > entregaReal || !dayAllowed(c.data)){
+        compValid = false;
+      }
+    }
+  });
+  if(compValid) addAlert('ok', 'Vencimento dos complementos: OK.');
+  else addAlert('error', 'Vencimento dos complementos: todos os complementos precisam estar dentro da obra e com vencimento no dia 10 ou 20.');
+
+  const mensaisObra = Math.min(Math.min(qtdMensais, 60), monthsDiffInclusive(primeiroVenc, entregaReal));
+  const mensaisPos = Math.max(0, Math.min(qtdMensais,60) - mensaisObra);
+
+  return {
+    emp, entregaReal, valorUnidade, renda, sinal, primeiroVenc,
+    qtdMensais: Math.min(qtdMensais,60), qtdComplementos: Math.min(qtdComplementos,4),
+    desconto, taxaObra, taxaPos, comps, mensaisObra, mensaisPos, alerts
+  };
+}
+function renderAlerts(alerts){
+  const box = $('alerts');
+  box.innerHTML = '';
+  alerts.forEach(a => {
+    const div = document.createElement('div');
+    div.className = `alert ${a.type}`;
+    div.textContent = a.text;
+    box.appendChild(div);
+  });
+}
+function buildFlow(){
+  recalcBasics();
+  const d = validationsAndData();
+  renderAlerts(d.alerts);
+
+  const tbody = $('tbodyFluxo');
+  tbody.innerHTML = '';
+
+  let saldo = d.valorUnidade;
+  let pagoAcum = 0;
+  let corrAcum = 0;
+  let maiorParcela = 0;
+
+  const rows = [];
+
+  function pushRow(obj){
+    rows.push(obj);
+  }
+
+  if(d.sinal > 0){
+    const saldoInicial = saldo;
+    const valorPago = d.sinal;
+    saldo = Math.max(0, saldo - valorPago);
+    pagoAcum += valorPago;
+    pushRow({
+      classe:'evento',
+      fase:'SINAL',
+      vencimento:new Date(),
+      periodo:'',
+      saldoInicial,
+      percCorrecao:0,
+      correcaoPeriodo:0,
+      saldoCorrigido:saldoInicial,
+      parcelasPeriodo:'',
+      parcelasRemanescentes:'',
+      valorParcela:valorPago,
+      valorPagoPeriodo:valorPago,
+      saldoFinal:saldo,
+      pagoAcumulado:pagoAcum,
+      correcaoAcumulada:corrAcum,
+      valorAtualizado:saldo + pagoAcum,
+      pctPagoAcumulado:(saldo + pagoAcum) > 0 ? pagoAcum/(saldo+pagoAcum) : 0,
+      pctSaldo:(saldo + pagoAcum) > 0 ? saldo/(saldo+pagoAcum) : 0,
+      pill:'evento'
+    });
+  }
+
+  if(d.desconto > 0){
+    const saldoInicial = saldo;
+    const valorPago = d.desconto;
+    saldo = Math.max(0, saldo - valorPago);
+    pagoAcum += valorPago;
+    pushRow({
+      classe:'evento',
+      fase:'DESCONTO',
+      vencimento:new Date(),
+      periodo:'',
+      saldoInicial,
+      percCorrecao:0,
+      correcaoPeriodo:0,
+      saldoCorrigido:saldoInicial,
+      parcelasPeriodo:'',
+      parcelasRemanescentes:'',
+      valorParcela:valorPago,
+      valorPagoPeriodo:valorPago,
+      saldoFinal:saldo,
+      pagoAcumulado:pagoAcum,
+      correcaoAcumulada:corrAcum,
+      valorAtualizado:saldo + pagoAcum,
+      pctPagoAcumulado:(saldo + pagoAcum) > 0 ? pagoAcum/(saldo+pagoAcum) : 0,
+      pctSaldo:(saldo + pagoAcum) > 0 ? saldo/(saldo+pagoAcum) : 0,
+      pill:'evento'
+    });
+  }
+
+  d.comps
+    .filter(c => c.valor > 0)
+    .sort((a,b) => (a.data?.getTime() || 0) - (b.data?.getTime() || 0))
+    .forEach(c => {
+      const saldoInicial = saldo;
+      const valorPago = c.valor;
+      saldo = Math.max(0, saldo - valorPago);
+      pagoAcum += valorPago;
+      pushRow({
+        classe:'evento',
+        fase:c.fase,
+        vencimento:c.data,
+        periodo:'',
+        saldoInicial,
+        percCorrecao:0,
+        correcaoPeriodo:0,
+        saldoCorrigido:saldoInicial,
+        parcelasPeriodo:'',
+        parcelasRemanescentes:'',
+        valorParcela:valorPago,
+        valorPagoPeriodo:valorPago,
+        saldoFinal:saldo,
+        pagoAcumulado:pagoAcum,
+        correcaoAcumulada:corrAcum,
+        valorAtualizado:saldo + pagoAcum,
+        pctPagoAcumulado:(saldo + pagoAcum) > 0 ? pagoAcum/(saldo+pagoAcum) : 0,
+        pctSaldo:(saldo + pagoAcum) > 0 ? saldo/(saldo+pagoAcum) : 0,
+        pill:'evento'
+      });
+    });
+
+  for(let i=1;i<=d.qtdMensais;i++){
+    const fase = i <= d.mensaisObra ? 'OBRA' : 'POS-OBRA';
+    const vencimento = addMonths(d.primeiroVenc, i-1);
+    const saldoInicial = saldo;
+    const percCorrecao = fase === 'OBRA' ? d.taxaObra : d.taxaPos;
+    const correcaoPeriodo = saldoInicial * percCorrecao;
+    corrAcum += correcaoPeriodo;
+    const saldoCorrigido = saldoInicial + correcaoPeriodo;
+    const parcelasRemanescentes = d.qtdMensais - (i-1);
+    const valorParcela = parcelasRemanescentes > 0 ? saldoCorrigido / parcelasRemanescentes : 0;
+    const valorPagoPeriodo = valorParcela;
+    const saldoFinal = Math.max(0, saldoCorrigido - valorPagoPeriodo);
+    saldo = saldoFinal;
+    pagoAcum += valorPagoPeriodo;
+    maiorParcela = Math.max(maiorParcela, valorParcela);
+
+    pushRow({
+      classe: fase === 'OBRA' ? 'obra' : 'pos',
+      fase,
+      vencimento,
+      periodo:i,
+      saldoInicial,
+      percCorrecao,
+      correcaoPeriodo,
+      saldoCorrigido,
+      parcelasPeriodo:1,
+      parcelasRemanescentes,
+      valorParcela,
+      valorPagoPeriodo,
+      saldoFinal,
+      pagoAcumulado:pagoAcum,
+      correcaoAcumulada:corrAcum,
+      valorAtualizado:saldoFinal + pagoAcum,
+      pctPagoAcumulado:(saldoFinal + pagoAcum) > 0 ? pagoAcum/(saldoFinal+pagoAcum) : 0,
+      pctSaldo:(saldoFinal + pagoAcum) > 0 ? saldoFinal/(saldoFinal+pagoAcum) : 0,
+      pill: fase === 'OBRA' ? 'obra' : 'pos'
+    });
+  }
+
+  rows.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.className = r.classe;
+    tr.innerHTML = `
+      <td class="left"><span class="pill ${r.pill}">${r.fase}</span></td>
+      <td>${fmtDate(r.vencimento)}</td>
+      <td>${r.periodo === '' ? '' : r.periodo}</td>
+      <td>${fmtCurrency(r.saldoInicial)}</td>
+      <td>${r.percCorrecao ? fmtRate(r.percCorrecao) : '-'}</td>
+      <td>${r.correcaoPeriodo ? fmtCurrency(r.correcaoPeriodo) : '-'}</td>
+      <td>${fmtCurrency(r.saldoCorrigido)}</td>
+      <td>${r.parcelasPeriodo === '' ? '' : r.parcelasPeriodo}</td>
+      <td>${r.parcelasRemanescentes === '' ? '' : r.parcelasRemanescentes}</td>
+      <td>${fmtCurrency(r.valorParcela)}</td>
+      <td>${fmtCurrency(r.valorPagoPeriodo)}</td>
+      <td>${fmtCurrency(r.saldoFinal)}</td>
+      <td>${fmtCurrency(r.pagoAcumulado)}</td>
+      <td>${fmtCurrency(r.correcaoAcumulada)}</td>
+      <td>${fmtCurrency(r.valorAtualizado)}</td>
+      <td>${fmtPercent(r.pctPagoAcumulado)}</td>
+      <td>${fmtPercent(r.pctSaldo)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  const saldoInicialFinanciado = Math.max(0, d.valorUnidade - d.sinal - d.desconto - d.comps.reduce((acc,c)=>acc + (c.valor || 0),0));
+  const comprometimento = d.renda > 0 ? maiorParcela / d.renda : 0;
+
+  $('kpiSaldo').textContent = fmtCurrency(saldoInicialFinanciado);
+  $('kpiAtualizado').textContent = rows.length ? fmtCurrency(rows[rows.length-1].valorAtualizado) : fmtCurrency(0);
+  $('kpiMaiorParcela').textContent = fmtCurrency(maiorParcela);
+  $('kpiComprometimento').textContent = fmtPercent(comprometimento);
+
+  const rendaMsg = comprometimento > 0.5
+    ? {type:'warn', text:'Renda: comprometimento acima de 50% da renda do cliente.'}
+    : {type:'ok', text:'Renda: comprometimento dentro do limite de 50%.'};
+
+  const existing = Array.from(document.querySelectorAll('#alerts .alert')).map(el => el.textContent);
+  if(!existing.includes(rendaMsg.text)){
+    const div = document.createElement('div');
+    div.className = `alert ${rendaMsg.type}`;
+    div.textContent = rendaMsg.text;
+    $('alerts').appendChild(div);
+  }
+
+  window.__flowRows = rows;
+}
+function exportCsv(){
+  const rows = window.__flowRows || [];
+  if(!rows.length){
+    alert('Gere a simulação antes de exportar.');
+    return;
+  }
+  const header = [
+    'Fase','Vencimento','Período','Saldo inicial','% correção','Correção do período','Saldo corrigido',
+    'Parcelas no período','Parcelas remanescentes','Valor por parcela','Valor pago no período',
+    'Saldo final','Pago acumulado','Correção acumulada','Valor Atualizado','% pago acumulado','% saldo'
+  ];
+  const lines = [header.join(';')];
+  rows.forEach(r => {
+    lines.push([
+      r.fase,
+      fmtDate(r.vencimento),
+      r.periodo,
+      r.saldoInicial.toFixed(2).replace('.',','),
+      r.percCorrecao.toFixed(6).replace('.',','),
+      r.correcaoPeriodo.toFixed(2).replace('.',','),
+      r.saldoCorrigido.toFixed(2).replace('.',','),
+      r.parcelasPeriodo,
+      r.parcelasRemanescentes,
+      r.valorParcela.toFixed(2).replace('.',','),
+      r.valorPagoPeriodo.toFixed(2).replace('.',','),
+      r.saldoFinal.toFixed(2).replace('.',','),
+      r.pagoAcumulado.toFixed(2).replace('.',','),
+      r.correcaoAcumulada.toFixed(2).replace('.',','),
+      r.valorAtualizado.toFixed(2).replace('.',','),
+      r.pctPagoAcumulado.toFixed(6).replace('.',','),
+      r.pctSaldo.toFixed(6).replace('.',',')
+    ].join(';'));
+  });
+
+  const blob = new Blob(["\ufeff" + lines.join('\n')], {type:'text/csv;charset=utf-8;'});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'fluxo_simulacao.csv';
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+function loadExample(){
+  $('empreendimento').value = 'Jóquei';
+  updateEntrega();
+  $('valorUnidade').value = 445000;
+  $('rendaCliente').value = 20000;
+  $('sinal').value = 22250;
+  $('primeiroVencimento').value = '2026-04-10';
+  $('qtdMensais').value = 60;
+  $('qtdComplementos').value = 2;
+  $('desconto').value = 15000;
+  $('taxaObra').value = 0.005;
+  $('taxaPos').value = 0.015;
+  createComplementos();
+  $('compData1').value = '2027-01-15';
+  $('compValor1').value = 500;
+  $('compData2').value = '2027-02-15';
+  $('compValor2').value = 500;
+  recalcBasics();
+  buildFlow();
+}
+function init(){
+  $('primeiroVencimento').value = '2026-04-10';
+  createComplementos();
+  updateEntrega();
+  ['empreendimento','valorUnidade','sinal','primeiroVencimento','qtdMensais','qtdComplementos'].forEach(id => {
+    $(id).addEventListener('input', () => {
+      if(id === 'qtdComplementos') createComplementos();
+      if(id === 'empreendimento') updateEntrega();
+      recalcBasics();
+    });
+    $(id).addEventListener('change', () => {
+      if(id === 'qtdComplementos') createComplementos();
+      if(id === 'empreendimento') updateEntrega();
+      recalcBasics();
+    });
+  });
+  $('btnSimular').addEventListener('click', buildFlow);
+  $('btnExemplo').addEventListener('click', loadExample);
+  $('btnCsv').addEventListener('click', exportCsv);
+  buildFlow();
+}
+init();
+</script>
+</body>
+</html>
