@@ -234,17 +234,17 @@
 
           <div class="field">
             <label for="valorUnidade">Valor da unidade</label>
-            <input id="valorUnidade" type="number" min="0" step="0.01" value="445000" />
+            <input id="valorUnidade" class="money" type="text" inputmode="numeric" value="R$ 445.000,00" />
           </div>
 
           <div class="field">
             <label for="rendaCliente">Renda do cliente</label>
-            <input id="rendaCliente" type="number" min="0" step="0.01" value="20000" />
+            <input id="rendaCliente" class="money" type="text" inputmode="numeric" value="R$ 20.000,00" />
           </div>
 
           <div class="field">
             <label for="sinal">Sinal</label>
-            <input id="sinal" type="number" min="0" step="0.01" value="22250" />
+            <input id="sinal" class="money" type="text" inputmode="numeric" value="R$ 22.250,00" />
           </div>
 
           <div class="field">
@@ -280,7 +280,7 @@
 
           <div class="field">
             <label for="desconto">Desconto</label>
-            <input id="desconto" type="number" min="0" step="0.01" value="0" />
+            <input id="desconto" class="money" type="text" inputmode="numeric" value="R$ 0,00" />
           </div>
 
           <div class="field">
@@ -369,9 +369,45 @@ const empreendimentos = {
 
 const $ = (id) => document.getElementById(id);
 
-function toNumber(v){
-  const n = Number(v);
+function parseBRL(value){
+  if(value === null || value === undefined) return 0;
+  const normalized = String(value)
+    .replace(/\s/g, '')
+    .replace(/R\$/g, '')
+    .replace(/\./g, '')
+    .replace(/,/g, '.')
+    .replace(/[^0-9.-]/g, '');
+  const n = Number(normalized);
   return Number.isFinite(n) ? n : 0;
+}
+function formatBRLInput(value){
+  const n = parseBRL(value);
+  return n.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+}
+function setupMoneyInput(input){
+  if(!input) return;
+  input.addEventListener('focus', () => {
+    const n = parseBRL(input.value);
+    input.value = n ? n.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}) : '';
+  });
+  input.addEventListener('input', () => {
+    let raw = input.value.replace(/[^\d]/g, '');
+    if(raw === ''){
+      input.value = '';
+      return;
+    }
+    const n = Number(raw) / 100;
+    input.value = n.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+  });
+  input.addEventListener('blur', () => {
+    input.value = formatBRLInput(input.value);
+    recalcBasics();
+  });
+  if(input.value) input.value = formatBRLInput(input.value);
+}
+
+function toNumber(v){
+  return parseBRL(v);
 }
 function parseDate(str){
   if(!str) return null;
@@ -379,10 +415,21 @@ function parseDate(str){
   return isNaN(d) ? null : d;
 }
 function fmtCurrency(v){
-  return v.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+  const n = Number(v) || 0;
+  return n.toLocaleString('pt-BR', {
+    style:'currency',
+    currency:'BRL',
+    minimumFractionDigits:2,
+    maximumFractionDigits:2
+  });
 }
 function fmtPercent(v){
-  return (v || 0).toLocaleString('pt-BR', {style:'percent', minimumFractionDigits:1, maximumFractionDigits:1});
+  const n = Number(v) || 0;
+  return n.toLocaleString('pt-BR', {
+    style:'percent',
+    minimumFractionDigits:1,
+    maximumFractionDigits:1
+  });
 }
 function fmtRate(v){
   return (v || 0).toLocaleString('pt-BR', {style:'percent', minimumFractionDigits:2, maximumFractionDigits:2});
@@ -434,10 +481,11 @@ function createComplementos(){
       </div>
       <div class="field" style="margin:0;">
         <label for="compValor${i}">Valor</label>
-        <input id="compValor${i}" type="number" min="0" step="0.01" value="0" />
+        <input id="compValor${i}" class="money" type="text" inputmode="numeric" value="R$ 0,00" />
       </div>
     `;
     wrap.appendChild(row);
+    setupMoneyInput(document.getElementById(`compValor${i}`));
   }
 }
 function updateEntrega(){
@@ -481,8 +529,8 @@ function validationsAndData(){
   const qtdMensais = Math.max(0, Math.min(999, Math.floor(toNumber($('qtdMensais').value))));
   const qtdComplementos = Math.max(0, Math.floor(toNumber($('qtdComplementos').value)));
   const desconto = toNumber($('desconto').value);
-  const taxaObra = toNumber($('taxaObra').value);
-  const taxaPos = toNumber($('taxaPos').value);
+  const taxaObra = Number($('taxaObra').value) || 0;
+  const taxaPos = Number($('taxaPos').value) || 0;
 
   const alerts = [];
   const addAlert = (type, text) => alerts.push({type, text});
@@ -701,12 +749,12 @@ function buildFlow(){
     tbody.appendChild(tr);
   });
 
-  const saldoInicialFinanciado = Math.max(0, d.valorUnidade - d.sinal - d.desconto - d.comps.reduce((acc,c)=>acc + (c.valor || 0),0));
+  const saldoInicialFinanciado = Math.max(0, Number(d.valorUnidade) - Number(d.sinal) - Number(d.desconto) - d.comps.reduce((acc,c)=>acc + Number(c.valor || 0),0));
   const comprometimento = d.renda > 0 ? maiorParcela / d.renda : 0;
 
   $('kpiSaldo').textContent = fmtCurrency(saldoInicialFinanciado);
   $('kpiAtualizado').textContent = rows.length ? fmtCurrency(rows[rows.length-1].valorAtualizado) : fmtCurrency(0);
-  $('kpiMaiorParcela').textContent = fmtCurrency(maiorParcela);
+  $('kpiMaiorParcela').textContent = fmtCurrency(Number(maiorParcela));
   $('kpiComprometimento').textContent = fmtPercent(comprometimento);
 
   const rendaMsg = comprometimento > 0.5
@@ -767,25 +815,26 @@ function exportCsv(){
 function loadExample(){
   $('empreendimento').value = 'Jóquei';
   updateEntrega();
-  $('valorUnidade').value = 445000;
-  $('rendaCliente').value = 20000;
-  $('sinal').value = 22250;
+  $('valorUnidade').value = 'R$ 445.000,00';
+  $('rendaCliente').value = 'R$ 20.000,00';
+  $('sinal').value = 'R$ 22.250,00';
   $('primeiroVencimento').value = '2026-04-10';
   $('qtdMensais').value = 60;
   $('qtdComplementos').value = 2;
-  $('desconto').value = 15000;
+  $('desconto').value = 'R$ 15.000,00';
   $('taxaObra').value = 0.005;
   $('taxaPos').value = 0.015;
   createComplementos();
   $('compData1').value = '2027-01-15';
-  $('compValor1').value = 500;
+  $('compValor1').value = 'R$ 500,00';
   $('compData2').value = '2027-02-15';
-  $('compValor2').value = 500;
+  $('compValor2').value = 'R$ 500,00';
   recalcBasics();
   buildFlow();
 }
 function init(){
   $('primeiroVencimento').value = '2026-04-10';
+  document.querySelectorAll('.money').forEach(setupMoneyInput);
   createComplementos();
   updateEntrega();
   ['empreendimento','valorUnidade','sinal','primeiroVencimento','qtdMensais','qtdComplementos'].forEach(id => {
